@@ -4,13 +4,14 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const { default: mongoose } = require('mongoose');
 dotenv.config();
+app.use(express.json());
 
 const path = require('path');
 
-if (process.env.NODE_ENV === 'local') {
+if (process.env.NODE_ENV === 'production') {
   app.use(
     cors({
-      origin: 'http://localhost:5001',
+      origin: 'http://localhost:5173',
       credentials: true,
     })
   );
@@ -22,6 +23,9 @@ if (process.env.NODE_ENV === 'local') {
   );
 }
 
+app.use('/api', require('./routes/authRoutes'));
+app.use('/api', require('./routes/designRoutes'));
+
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, './frontend/dist')));
   app.get('*', (req, res) => {
@@ -31,8 +35,14 @@ if (process.env.NODE_ENV === 'production') {
 
 const dbConnect = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log('Production Database ola kala...');
+    if (process.env.NODE_ENV === 'local') {
+      await mongoose.connect(process.env.LOCAL_DB_URI)
+      console.log('local good');
+    } else {
+      await mongoose.connect(process.env.MONGODB_URI);
+      console.log('Production Database ola kala...');
+    }
+
   } catch (error) {
     console.log(error);
   }
